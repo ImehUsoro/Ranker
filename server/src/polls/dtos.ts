@@ -1,4 +1,4 @@
-import { Length, IsInt, IsString, Min, Max } from 'class-validator';
+import { IsInt, IsString, Length, Max, Min } from 'class-validator';
 
 export class CreatePollDto {
   @IsString()

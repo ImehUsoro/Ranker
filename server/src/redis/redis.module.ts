@@ -1,8 +1,8 @@
 import {
-  Module,
   DynamicModule,
-  ModuleMetadata,
   FactoryProvider,
+  Module,
+  ModuleMetadata,
 } from '@nestjs/common';
 import IORedis, { Redis, RedisOptions } from 'ioredis';
 

@@ -1,15 +1,13 @@
 import {
-  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import { IORedisKey } from 'src/redis/redis.module';
 import { Poll } from 'shared';
+import { IORedisKey } from 'src/redis/redis.module';
 import { AddParticipantData, CreatePollData } from './types';
 
 @Injectable()
@@ -68,6 +66,11 @@ export class PollRepository {
 
     try {
       const poll = await this.redisClient.send_command('JSON.GET', key, '.');
+
+      if (!poll) {
+        this.logger.log(`Poll ${pollID} does not exist`);
+        return null;
+      }
 
       this.logger.verbose(`Got poll ${pollID}: ${poll}`);
 

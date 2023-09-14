@@ -1,12 +1,16 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { createPollID, createUserID } from 'src/id';
-import { PollRepository } from './polls.repsitory';
+import { PollRepository } from './polls.repository';
+import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class PollsService {
   private readonly logger = new Logger(PollsService.name);
-  constructor(private readonly pollsRepository: PollRepository) {}
+  constructor(
+    private readonly pollsRepository: PollRepository,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async createPoll(fields: CreatePollFields) {
     const pollID = createPollID();
@@ -18,9 +22,23 @@ export class PollsService {
       ...fields,
     });
 
+    this.logger.debug(
+      `Creating a Token for pollId: ${createdPoll.id} user with ID: ${userID}`,
+    );
+
+    const accessToken = this.jwtService.sign(
+      {
+        pollID: createdPoll.id,
+        name: fields.name,
+      },
+      {
+        subject: userID,
+      },
+    );
+
     return {
-      createdPoll,
-      //   accessToken,
+      ...createdPoll,
+      accessToken,
     };
   }
 
@@ -32,7 +50,32 @@ export class PollsService {
     );
 
     const joinedPoll = await this.pollsRepository.getPoll(fields.pollID);
-    return { joinedPoll };
+
+    if (!joinedPoll) {
+      this.logger.debug(`Poll with ID: ${fields.pollID} does not exist`);
+      throw new NotFoundException(
+        `Poll with ID: ${fields.pollID} does not exist`,
+      );
+    }
+
+    this.logger.debug(
+      `Creating a Token for pollId: ${joinedPoll.id} user with ID: ${userID}`,
+    );
+
+    const accessToken = this.jwtService.sign(
+      {
+        pollID: joinedPoll.id,
+        name: fields.name,
+      },
+      {
+        subject: userID,
+      },
+    );
+
+    return {
+      ...joinedPoll,
+      accessToken,
+    };
   }
 
   async rejoin(fields: RejoinPollFields) {
@@ -42,6 +85,6 @@ export class PollsService {
 
     const joinedPoll = await this.pollsRepository.addParticipant(fields);
 
-    return joinedPoll;
+    return { joinedPoll };
   }
 }
