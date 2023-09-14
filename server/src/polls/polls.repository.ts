@@ -91,6 +91,7 @@ export class PollRepository {
 
     const key = `polls:${pollID}`;
     const participantPath = `.participants.${userID}`;
+    console.log({ participantPath });
 
     try {
       await this.redisClient.send_command(
@@ -106,7 +107,7 @@ export class PollRepository {
         '.',
       );
 
-      const poll = JSON.parse(pollJSON);
+      const poll = JSON.parse(pollJSON) as Poll;
 
       this.logger.debug(
         `Added participant ${userID} to poll ${pollID}`,

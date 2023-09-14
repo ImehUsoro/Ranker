@@ -85,6 +85,6 @@ export class PollsService {
 
     const joinedPoll = await this.pollsRepository.addParticipant(fields);
 
-    return { joinedPoll };
+    return joinedPoll;
   }
 }
