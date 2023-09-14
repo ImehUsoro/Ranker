@@ -1,8 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { createPollID, createUserID } from 'src/id';
 import { PollRepository } from './polls.repository';
 import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class PollsService {

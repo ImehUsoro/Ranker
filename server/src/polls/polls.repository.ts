@@ -111,7 +111,11 @@ export class PollRepository {
 
       this.logger.debug(
         `Added participant ${userID} to poll ${pollID}`,
-        `Current participants: ${poll.participants}}`,
+        `Current participants: ${JSON.stringify(
+          { participants: poll.participants },
+          null,
+          2,
+        )}`,
       );
 
       return poll;

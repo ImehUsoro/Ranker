@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { SocketIOAdapter } from './socket-io-adapter';
 
 async function bootstrap() {
   const logger = new Logger('Main (main.ts)');
@@ -17,6 +18,8 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = parseInt(configService.get('PORT'));
   const clientPort = parseInt(configService.get('CLIENT_PORT'));
+
+  app.useWebSocketAdapter(new SocketIOAdapter(app, configService));
 
   app.enableCors({
     origin: [
