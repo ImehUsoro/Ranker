@@ -7,8 +7,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Namespace, Socket } from 'socket.io';
+import { Namespace } from 'socket.io';
 import { PollsService } from './polls.service';
+import { SocketWithAuth } from './types';
 
 @WebSocketGateway({
   namespace: 'polls',
@@ -25,16 +26,25 @@ export class PollsGateway
     this.logger.log('Websocket Gateway Initialized!');
   }
 
-  handleConnection(client: Socket) {
+  handleConnection(client: SocketWithAuth) {
     const sockets = this.io.sockets;
+
+    this.logger.debug(
+      `Socket connected with userID: ${client.userID}, pollID: ${client.pollID} and name: ${client.name}`,
+    );
+
     this.logger.log(`Client connected: ${client.id}`);
     this.logger.log(`Total clients: ${sockets.size}`);
 
     this.io.emit('hello', `from ${client.id}`);
   }
 
-  handleDisconnect(client: Socket) {
+  handleDisconnect(client: SocketWithAuth) {
     const sockets = this.io.sockets;
+
+    this.logger.debug(
+      `Socket disconnected with userID: ${client.userID}, pollID: ${client.pollID} and name: ${client.name}`,
+    );
     this.logger.log(`Client disconnected: ${client.id}`);
     this.logger.log(`Total clients: ${sockets.size}`);
 

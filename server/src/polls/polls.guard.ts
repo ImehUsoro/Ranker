@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Observable } from 'rxjs';
+import { AuthRequest } from './types';
 
 @Injectable()
 export class PollsAuthGuard implements CanActivate {
@@ -17,11 +18,11 @@ export class PollsAuthGuard implements CanActivate {
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request: AuthRequest = context.switchToHttp().getRequest();
 
     this.logger.debug(`Checking if request is authorized`);
 
-    const bearerToken = request.headers.authorization;
+    const bearerToken = request.headers['authorization'];
 
     if (!bearerToken) {
       this.logger.debug(`Request has no token`);
