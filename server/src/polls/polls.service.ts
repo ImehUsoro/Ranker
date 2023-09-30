@@ -1,8 +1,23 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { createPollID, createUserID } from 'src/id';
+import { createNominationID, createPollID, createUserID } from 'src/id';
 import { PollRepository } from './polls.repository';
-import { CreatePollFields, JoinPollFields, RejoinPollFields } from './types';
+import {
+  AddNominationFields,
+  AddParticipantFields,
+  CreatePollFields,
+  JoinPollFields,
+  RejoinPollFields,
+  RemoveParticipantFields,
+  SubmitRankingsFields,
+} from './types';
+import { Poll } from 'shared';
+import getResults from './getResults';
 
 @Injectable()
 export class PollsService {
@@ -42,6 +57,16 @@ export class PollsService {
     };
   }
 
+  async getPoll(pollID: string) {
+    const poll = await this.pollsRepository.getPoll(pollID);
+
+    if (!poll) {
+      throw new NotFoundException(`Poll with ID: ${pollID} does not exist`);
+    }
+
+    return poll;
+  }
+
   async joinPoll(fields: JoinPollFields) {
     const userID = createUserID();
 
@@ -62,6 +87,15 @@ export class PollsService {
       `Creating a Token for pollId: ${joinedPoll.id} user with ID: ${userID}`,
     );
 
+    // don't add players from here, add it from socket connection
+    // const updatedPoll = await this.pollsRepository.addParticipant({
+    //   pollID: joinedPoll.id,
+    //   userID,
+    //   name: fields.name,
+    // });
+
+    // console.log('fields name ====>', fields.name);
+
     const accessToken = this.jwtService.sign(
       {
         pollID: joinedPoll.id,
@@ -73,7 +107,7 @@ export class PollsService {
     );
 
     return {
-      ...joinedPoll,
+      joinedPoll,
       accessToken,
     };
   }
@@ -86,5 +120,79 @@ export class PollsService {
     const joinedPoll = await this.pollsRepository.addParticipant(fields);
 
     return joinedPoll;
+  }
+
+  async addParticipant(
+    participantData: AddParticipantFields,
+  ): Promise<Poll | null> {
+    return this.pollsRepository.addParticipant(participantData);
+  }
+
+  async removeParticipant(
+    participantData: RemoveParticipantFields,
+  ): Promise<Poll | void> {
+    const poll = await this.pollsRepository.getPoll(participantData.pollID);
+
+    if (!poll.hasStarted) {
+      const updatedPoll = await this.pollsRepository.removeParticipant(
+        participantData,
+      );
+
+      return updatedPoll;
+    }
+  }
+
+  async addNomination({
+    pollID,
+    userID,
+    text,
+  }: AddNominationFields): Promise<Poll> {
+    return this.pollsRepository.addNomination({
+      pollID,
+      nominationID: createNominationID(),
+      nomination: {
+        text,
+        userID,
+      },
+    });
+  }
+
+  async removeNomination(pollID: string, nominationID: string): Promise<Poll> {
+    return this.pollsRepository.removeNomination(pollID, nominationID);
+  }
+
+  async startPoll(pollID: string): Promise<Poll> {
+    return this.pollsRepository.startPoll(pollID);
+  }
+
+  async submitRankings(rankingsData: SubmitRankingsFields) {
+    const hasPollStarted = await this.pollsRepository.getPoll(
+      rankingsData.pollID,
+    );
+
+    if (!hasPollStarted.hasStarted) {
+      throw new BadRequestException('Poll has not started');
+    }
+    return this.pollsRepository.addParticipantRankings(rankingsData);
+  }
+
+  async computeResults(pollID: string) {
+    const poll = await this.pollsRepository.getPoll(pollID);
+
+    if (!poll.hasStarted) {
+      throw new BadRequestException('Poll has not started');
+    }
+
+    const results = getResults(
+      poll.rankings,
+      poll.nominations,
+      poll.votesPerVoter,
+    );
+
+    return this.pollsRepository.addResults(pollID, results);
+  }
+
+  async cancelPoll(pollID: string) {
+    return this.pollsRepository.deletePoll(pollID);
   }
 }

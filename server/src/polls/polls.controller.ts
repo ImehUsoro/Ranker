@@ -16,18 +16,19 @@ import { AuthRequest } from './types';
 @UsePipes(new ValidationPipe())
 @Controller('polls')
 export class PollsController {
+  private readonly logger = new Logger(PollsController.name);
   constructor(private pollsService: PollsService) {}
 
   @Post()
   async create(@Body() createPollDto: CreatePollDto) {
-    Logger.log('Creating a poll...');
+    this.logger.log('Creating a poll...');
 
     return this.pollsService.createPoll(createPollDto);
   }
 
   @Post('/join')
   async join(@Body() joinPollDto: JoinPollDto) {
-    Logger.log('Joining a poll...');
+    this.logger.log('Joining a poll...');
 
     return this.pollsService.joinPoll(joinPollDto);
   }
@@ -37,7 +38,7 @@ export class PollsController {
   async rejoin(@Req() request: AuthRequest) {
     const { pollID, name, userID } = request;
 
-    Logger.log('Rejoining a poll...');
+    this.logger.log('Rejoining a poll...');
 
     return this.pollsService.rejoin({
       pollID,
