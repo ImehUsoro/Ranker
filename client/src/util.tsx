@@ -1,4 +1,5 @@
 import React from 'react';
+import { Poll } from 'shared/poll-types';
 
 export const colorizeText = (text: string): JSX.Element[] =>
   text.split('').map((val, index) => {
@@ -22,4 +23,8 @@ type TokenPayload = {
 };
 
 export const getTokenPayload = (accessToken: string): TokenPayload =>
-  JSON.parse(atob(accessToken.split('.')[1]));
+  JSON.parse(window.atob(accessToken.split('.')[1]));
+
+export type CreatePollResponse = Poll & {
+  accessToken: string;
+};
